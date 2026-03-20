@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food Combining Checker</title>
+<style>
+:root{
+  --bg:#0d1a0e;--sur:#131f13;--sur2:#192619;--sur3:#1f2f1f;
+  --bdr:#2a3e2a;--bdr2:#364e36;
+  --green:#52c278;--gbg:rgba(82,194,120,.12);--gbdr:rgba(82,194,120,.35);--gtxt:#7dd4a0;
+  --pbg:rgba(62,168,110,.09);--pbdr:rgba(62,168,110,.3);--ptxt:#6ec498;
+  --yel:#d4a53a;--ybg:rgba(212,165,58,.12);--ybdr:rgba(212,165,58,.35);--ytxt:#e8c46a;
+  --red:#e05c5c;--rbg:rgba(224,92,92,.1);--rbdr:rgba(224,92,92,.3);--rtxt:#f09090;
+  --gold:#d4b86a;--txt:#bfb8a4;--mut:#6e6e58;--dim:#484840;--wh:#f0ebe0;
+  --sf:Georgia,serif; --ss:-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--ss);line-height:1.55;padding:2rem 1rem 4rem;min-height:100vh}
+.page{max-width:860px;margin:0 auto}
+
+/* header */
+header{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--bdr);position:relative}
+header::before{content:"";position:absolute;bottom:-1px;left:0;width:60px;height:2px;background:var(--green)}
+.htag{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gtxt);margin-bottom:.5rem;display:block}
+header h1{font-family:var(--sf);font-size:2rem;font-weight:normal;color:var(--wh);line-height:1.15;margin-bottom:.35rem}
+header h1 em{color:var(--gtxt)}
+header p{font-size:.85rem;color:var(--mut)}
+
+/* card */
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;padding:1.5rem;margin-bottom:1.5rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.lfield{display:flex;flex-direction:column}
+.flbl{font-size:.68rem;font-weight:bold;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:.45rem;display:block}
+
+/* filter + list */
+#filter{width:100%;background:var(--sur2);border:1px solid var(--bdr2);border-bottom:none;border-radius:2px 2px 0 0;color:var(--wh);font-family:var(--ss);font-size:.88rem;padding:.65rem .85rem;outline:none}
+#filter:focus{border-color:var(--green)}
+#filter::placeholder{color:var(--dim)}
+#list{background:var(--sur3);border:1px solid var(--bdr2);border-radius:0 0 2px 2px;height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bdr2) var(--sur2);cursor:pointer}
+#list::-webkit-scrollbar{width:5px}
+#list::-webkit-scrollbar-track{background:var(--sur2)}
+#list::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+.lbl{background:var(--sur2);border-bottom:1px solid var(--bdr);border-top:1px solid var(--bdr);padding:.3rem .8rem;font-size:.62rem;font-weight:bold;letter-spacing:.14em;text-transform:uppercase;color:var(--gtxt)}
+.item{padding:.42rem .8rem;font-size:.84rem;color:var(--txt);border-bottom:1px solid rgba(255,255,255,.025)}
+.item:hover{background:rgba(82,194,120,.1);color:var(--gtxt)}
+.item.sel{background:rgba(82,194,120,.2);color:var(--gtxt);font-weight:600}
+.item.hide,.lbl.hide{display:none}
+#spill{margin-top:.4rem;font-size:.78rem;color:var(--gtxt);font-style:italic;min-height:1.1rem}
+
+/* meal select */
+#meal{width:100%;background:var(--sur2);border:1px solid var(--bdr2);border-radius:2px;color:var(--wh);font-family:var(--ss);font-size:.88rem;padding:.65rem .85rem;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e58'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .85rem center;margin-bottom:.75rem}
+#meal:focus{border-color:var(--green)}
+#meal option{background:#1a2a1a;color:var(--wh)}
+
+/* button */
+#go{width:100%;background:var(--green);color:#0d1a0e;border:none;border-radius:2px;font-size:.85rem;font-weight:bold;letter-spacing:.14em;text-transform:uppercase;padding:.85rem;cursor:pointer;margin-top:auto}
+#go:hover{opacity:.88}
+#go:disabled{background:var(--bdr);color:var(--dim);cursor:not-allowed}
+.err{background:var(--rbg);border:1px solid var(--rbdr);border-radius:2px;padding:.7rem 1rem;font-size:.84rem;color:var(--rtxt);margin-top:.75rem;display:none}
+.err.show{display:block}
+
+/* result */
+#res{display:none}
+#res.on{display:block;animation:fu .3s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.bnr{border-radius:3px 3px 0 0;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;border:1px solid;border-bottom:none}
+.bnr.green{background:rgba(82,194,120,.14);border-color:var(--gbdr)}
+.bnr.gplus{background:rgba(62,168,110,.1);border-color:var(--pbdr);border-style:dashed}
+.bnr.yellow{background:rgba(212,165,58,.12);border-color:var(--ybdr)}
+.bnr.red{background:rgba(224,92,92,.1);border-color:var(--rbdr)}
+.bico{font-size:1.8rem;flex-shrink:0;line-height:1}
+.brat{font-size:.68rem;font-weight:bold;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.12rem}
+.bnr.green .brat{color:var(--gtxt)} .bnr.gplus .brat{color:var(--ptxt)} .bnr.yellow .brat{color:var(--ytxt)} .bnr.red .brat{color:var(--rtxt)}
+.bnam{font-family:var(--sf);font-size:1.45rem;font-weight:normal;color:var(--wh)}
+.bml{margin-left:auto}
+.mtag{font-size:.68rem;font-weight:bold;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .65rem;border-radius:2px;display:inline-block;white-space:nowrap}
+.bnr.green .mtag{background:var(--gbg);color:var(--gtxt);border:1px solid var(--gbdr)}
+.bnr.gplus .mtag{background:var(--pbg);color:var(--ptxt);border:1px solid var(--pbdr)}
+.bnr.yellow .mtag{background:var(--ybg);color:var(--ytxt);border:1px solid var(--ybdr)}
+.bnr.red .mtag{background:var(--rbg);color:var(--rtxt);border:1px solid var(--rbdr)}
+.mnote{background:var(--sur);border:1px solid var(--bdr);border-top:none;padding:.85rem 1.5rem;font-size:.84rem;color:var(--txt);font-style:italic;display:flex;gap:.5rem}
+.mnote .arr{color:var(--gold);flex-shrink:0}
+.snote{background:var(--sur2);border:1px solid var(--bdr);border-top:none;padding:.7rem 1.5rem;font-size:.8rem;color:var(--mut);display:flex;gap:.5rem}
+.snote .dia{color:var(--gold);flex-shrink:0}
+.csec{background:var(--sur);border:1px solid var(--bdr);border-top:none}
+.chdr{padding:.7rem 1.5rem;background:var(--sur2);border-bottom:1px solid var(--bdr);font-size:.66rem;font-weight:bold;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.cgrd{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:560px){.cgrd{grid-template-columns:1fr}}
+.ccol{padding:.95rem 1.2rem;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+.ccol:nth-child(2n){border-right:none}
+.ccol:last-child{border-bottom:none}
+.ccol:nth-last-child(2):nth-child(odd){border-bottom:none}
+.chead{display:flex;align-items:center;gap:.4rem;margin-bottom:.55rem}
+.cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ccol.cg{background:rgba(82,194,120,.04)} .ccol.cg .cdot{background:var(--green)}
+.ccol.cp{background:rgba(62,168,110,.03)} .ccol.cp .cdot{background:#3ea86e}
+.ccol.cy{background:rgba(212,165,58,.04)} .ccol.cy .cdot{background:var(--yel)}
+.ccol.cr{background:rgba(224,92,92,.03)}  .ccol.cr .cdot{background:var(--red)}
+.clbl{font-size:.64rem;font-weight:bold;letter-spacing:.12em;text-transform:uppercase}
+.ccol.cg .clbl{color:var(--gtxt)} .ccol.cp .clbl{color:var(--ptxt)} .ccol.cy .clbl{color:var(--ytxt)} .ccol.cr .clbl{color:var(--rtxt)}
+.cul{list-style:none;padding:0}
+.cul li{padding:.28rem 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.81rem}
+.cul li:last-child{border-bottom:none}
+.fn{color:var(--wh);display:block}
+.fe{display:block;font-size:.71rem;color:var(--dim);font-style:italic}
+.cem{font-size:.8rem;color:var(--dim);font-style:italic}
+.wstr{background:var(--sur2);border:1px solid var(--bdr);border-top:none;border-radius:0 0 3px 3px;padding:.95rem 1.5rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}
+.wico{font-size:1.2rem;line-height:1}
+.wlbl{font-size:.64rem;font-weight:bold;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:.1rem}
+.wtim{font-family:var(--sf);font-size:1.4rem;color:var(--gold);line-height:1;margin-bottom:.12rem}
+.wdet{font-size:.78rem;color:var(--mut);font-style:italic}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <span class="htag">Dr. Robert Morse Framework &middot; Athlete Edition</span>
+  <h1>Food Combining <em>Checker</em></h1>
+  <p>Type to filter, click a food to select it, choose your meal timing, then hit Check.</p>
+</header>
+
+<div class="card">
+  <div class="grid2">
+
+    <div>
+      <label class="flbl">1 &mdash; Select Food</label>
+      <input type="text" id="filter" placeholder="Type to filter..." autocomplete="off" spellcheck="false">
+      <div id="list">
+<div class="lbl">Berries</div>
+<div class="item" data-id="strawberry" data-type="berry">Strawberry</div>
+<div class="item" data-id="blueberry" data-type="berry">Blueberry</div>
+<div class="item" data-id="raspberry" data-type="berry">Raspberry</div>
+<div class="item" data-id="blackberry" data-type="berry">Blackberry</div>
+<div class="item" data-id="cranberry" data-type="berry">Cranberry</div>
+<div class="item" data-id="cherry" data-type="berry">Cherry / Tart Cherry</div>
+<div class="item" data-id="gooseberry" data-type="berry">Gooseberry</div>
+<div class="lbl">Melons</div>
+<div class="item" data-id="watermelon" data-type="melon">Watermelon</div>
+<div class="item" data-id="cantaloupe" data-type="melon">Cantaloupe</div>
+<div class="item" data-id="honeydew" data-type="melon">Honeydew</div>
+<div class="item" data-id="rockmelon" data-type="melon">Rockmelon</div>
+<div class="lbl">Acid Fruits</div>
+<div class="item" data-id="orange" data-type="acid-fruit">Orange</div>
+<div class="item" data-id="grapefruit" data-type="acid-fruit">Grapefruit</div>
+<div class="item" data-id="lemon" data-type="acid-fruit">Lemon</div>
+<div class="item" data-id="lime" data-type="acid-fruit">Lime</div>
+<div class="item" data-id="pineapple" data-type="acid-fruit">Pineapple</div>
+<div class="item" data-id="kiwi" data-type="acid-fruit">Kiwi</div>
+<div class="item" data-id="pomegranate" data-type="acid-fruit">Pomegranate</div>
+<div class="lbl">Sub-acid Fruits</div>
+<div class="item" data-id="apple" data-type="sub-acid-fruit">Apple</div>
+<div class="item" data-id="pear" data-type="sub-acid-fruit">Pear</div>
+<div class="item" data-id="mango" data-type="sub-acid-fruit">Mango</div>
+<div class="item" data-id="papaya" data-type="sub-acid-fruit">Papaya</div>
+<div class="item" data-id="peach" data-type="sub-acid-fruit">Peach</div>
+<div class="item" data-id="plum" data-type="sub-acid-fruit">Plum</div>
+<div class="item" data-id="apricot" data-type="sub-acid-fruit">Apricot</div>
+<div class="item" data-id="grapes" data-type="sub-acid-fruit">Grapes</div>
+<div class="item" data-id="nectarine" data-type="sub-acid-fruit">Nectarine</div>
+<div class="item" data-id="guava" data-type="sub-acid-fruit">Guava</div>
+<div class="lbl">Sweet Fruits</div>
+<div class="item" data-id="banana" data-type="sweet-fruit">Banana</div>
+<div class="item" data-id="dates" data-type="sweet-fruit">Dates</div>
+<div class="item" data-id="figs" data-type="sweet-fruit">Figs</div>
+<div class="item" data-id="raisins" data-type="sweet-fruit">Raisins</div>
+<div class="item" data-id="persimmon" data-type="sweet-fruit">Persimmon</div>
+<div class="item" data-id="driedmango" data-type="sweet-fruit">Dried Mango</div>
+<div class="item" data-id="plantain" data-type="sweet-fruit">Plantain (ripe)</div>
+<div class="lbl">Non-starchy Veg</div>
+<div class="item" data-id="spinach" data-type="nonstarchy">Spinach</div>
+<div class="item" data-id="kale" data-type="nonstarchy">Kale</div>
+<div class="item" data-id="lettuce" data-type="nonstarchy">Lettuce</div>
+<div class="item" data-id="arugula" data-type="nonstarchy">Arugula / Rocket</div>
+<div class="item" data-id="cucumber" data-type="nonstarchy">Cucumber</div>
+<div class="item" data-id="celery" data-type="nonstarchy">Celery</div>
+<div class="item" data-id="zucchini" data-type="nonstarchy">Zucchini / Courgette</div>
+<div class="item" data-id="bellpepper" data-type="nonstarchy">Bell Pepper</div>
+<div class="item" data-id="tomato" data-type="nonstarchy">Tomato</div>
+<div class="item" data-id="broccoli" data-type="nonstarchy">Broccoli (raw)</div>
+<div class="item" data-id="cauliflower" data-type="nonstarchy">Cauliflower (raw)</div>
+<div class="item" data-id="sprouts" data-type="nonstarchy">Sprouts (all kinds)</div>
+<div class="item" data-id="parsley" data-type="nonstarchy">Parsley</div>
+<div class="item" data-id="coriander" data-type="nonstarchy">Coriander / Cilantro</div>
+<div class="item" data-id="sauerkraut" data-type="nonstarchy">Sauerkraut (fermented)</div>
+<div class="item" data-id="kimchi" data-type="nonstarchy">Kimchi (fermented)</div>
+<div class="item" data-id="garlic" data-type="nonstarchy">Garlic (raw)</div>
+<div class="item" data-id="ginger" data-type="nonstarchy">Ginger (raw)</div>
+<div class="item" data-id="wheatgrass" data-type="nonstarchy">Wheatgrass</div>
+<div class="lbl">Starchy Veg</div>
+<div class="item" data-id="sweetpotato" data-type="starchy">Sweet Potato</div>
+<div class="item" data-id="potato" data-type="starchy">Potato</div>
+<div class="item" data-id="pumpkin" data-type="starchy">Pumpkin</div>
+<div class="item" data-id="beetroot" data-type="starchy">Beetroot / Beet</div>
+<div class="item" data-id="carrot" data-type="starchy">Carrot</div>
+<div class="item" data-id="parsnip" data-type="starchy">Parsnip</div>
+<div class="item" data-id="corn" data-type="starchy">Corn / Sweetcorn</div>
+<div class="lbl">Nuts and Seeds</div>
+<div class="item" data-id="almonds" data-type="nuts">Almonds (soaked)</div>
+<div class="item" data-id="walnuts" data-type="nuts">Walnuts (soaked)</div>
+<div class="item" data-id="pecans" data-type="nuts">Pecans</div>
+<div class="item" data-id="hempseeds" data-type="nuts">Hemp Seeds</div>
+<div class="item" data-id="pumpkinseeds" data-type="nuts">Pumpkin Seeds (soaked)</div>
+<div class="item" data-id="sunflower" data-type="nuts">Sunflower Seeds (soaked)</div>
+<div class="item" data-id="chia" data-type="nuts">Chia Seeds</div>
+<div class="item" data-id="flaxseed" data-type="nuts">Flaxseed / Linseed</div>
+<div class="item" data-id="pinenuts" data-type="nuts">Pine Nuts</div>
+<div class="item" data-id="brazilnuts" data-type="nuts">Brazil Nuts</div>
+<div class="item" data-id="tahini" data-type="nuts">Sesame / Tahini</div>
+<div class="item" data-id="macadamia" data-type="nuts">Macadamia Nuts</div>
+<div class="lbl">Healthy Fats</div>
+<div class="item" data-id="avocado" data-type="fat">Avocado</div>
+<div class="item" data-id="oliveoil" data-type="fat">Olive Oil (cold-pressed)</div>
+<div class="item" data-id="coconutraw" data-type="fat">Coconut (raw / fresh)</div>
+<div class="item" data-id="coconutoil" data-type="fat">Coconut Oil</div>
+<div class="item" data-id="hempoil" data-type="fat">Hemp Oil</div>
+<div class="lbl">Sea Vegetables</div>
+<div class="item" data-id="nori" data-type="seaveg">Nori</div>
+<div class="item" data-id="dulse" data-type="seaveg">Dulse</div>
+<div class="item" data-id="kelp" data-type="seaveg">Kelp</div>
+<div class="item" data-id="wakame" data-type="seaveg">Wakame</div>
+<div class="item" data-id="spirulina" data-type="seaveg">Spirulina</div>
+<div class="item" data-id="chlorella" data-type="seaveg">Chlorella</div>
+<div class="item" data-id="irishmoss" data-type="seaveg">Irish Moss</div>
+<div class="lbl">Superfoods</div>
+<div class="item" data-id="beepollen" data-type="superfood">Bee Pollen</div>
+<div class="item" data-id="maca" data-type="superfood">Maca Powder</div>
+<div class="item" data-id="rawcacao" data-type="superfood">Raw Cacao / Cacao Nibs</div>
+<div class="lbl">Acceptable Proteins</div>
+<div class="item" data-id="eggs" data-type="egg">Eggs (pasture-raised)</div>
+<div class="item" data-id="salmon" data-type="fish">Salmon (wild)</div>
+<div class="item" data-id="mackerel" data-type="fish">Mackerel (wild)</div>
+<div class="item" data-id="tuna" data-type="fish">Tuna (wild)</div>
+<div class="item" data-id="sardines" data-type="fish">Sardines (wild)</div>
+<div class="item" data-id="chicken" data-type="chicken">Chicken Breast</div>
+<div class="lbl">Grains</div>
+<div class="item" data-id="sourdough" data-type="grain">Sourdough Bread</div>
+<div class="item" data-id="ancientpasta" data-type="grain">Ancient Grain Pasta</div>
+<div class="item" data-id="bulgur" data-type="grain">Bulgur Wheat</div>
+<div class="item" data-id="rice" data-type="grain">Rice (white or brown)</div>
+<div class="item" data-id="ricecakes" data-type="grain">Rice Cakes</div>
+<div class="lbl">Legumes</div>
+<div class="item" data-id="lentilssprouted" data-type="legume-raw">Lentils (sprouted / raw)</div>
+<div class="item" data-id="lentilscooked" data-type="legume-cooked">Lentils (cooked)</div>
+<div class="item" data-id="chickpeasraw" data-type="legume-raw">Chickpeas (sprouted / raw)</div>
+<div class="item" data-id="chickpeascooked" data-type="legume-cooked">Chickpeas (cooked)</div>
+<div class="item" data-id="cannellini" data-type="legume-cooked">Cannellini Beans</div>
+<div class="item" data-id="kidney" data-type="legume-cooked">Kidney Beans</div>
+<div class="item" data-id="whitebeans" data-type="legume-cooked">White / Navy Beans</div>
+<div class="lbl">Drinks</div>
+<div class="item" data-id="coconutwater" data-type="drink">Coconut Water</div>
+<div class="item" data-id="coffee" data-type="coffee">Coffee (oat milk cap)</div>
+<div class="item" data-id="celeryjuice" data-type="drink">Celery / Green Juice</div>
+<div class="item" data-id="herbaltea" data-type="drink">Herbal Tea</div>
+<div class="item" data-id="lemonwater" data-type="drink">Lemon Water</div>
+      </div>
+      <div id="spill">No food selected</div>
+    </div>
+
+    <div class="lfield">
+      <label class="flbl" for="meal">2 &mdash; When Are You Eating It?</label>
+      <select id="meal">
+        <option value="">Choose meal / timing...</option>
+        <option value="breakfast">Breakfast</option>
+        <option value="preworkout">Pre-workout</option>
+        <option value="postworkout">Post-workout</option>
+        <option value="lunch">Lunch</option>
+        <option value="daysnack">Day Snack</option>
+        <option value="dinner">Dinner</option>
+        <option value="nightsnack">Night Snack</option>
+      </select>
+      <button id="go" disabled>Check Food</button>
+    </div>
+
+  </div>
+  <div class="err" id="err">Please select a food and a meal timing before checking.</div>
+</div>
+
+<div id="res"></div>
+
+</div>
+<script>
+// ---- DATA ----
+var TM = {
+  "berry":{"l":"Berries","g":"strawberry, blueberry, raspberry, blackberry, cranberry, cherry"},
+  "melon":{"l":"Melons","g":"watermelon, cantaloupe, honeydew"},
+  "acid-fruit":{"l":"Acid Fruits","g":"orange, lemon, pineapple, kiwi, strawberry, raspberry"},
+  "sub-acid-fruit":{"l":"Sub-acid Fruits","g":"apple, pear, mango, peach, blueberry, grapes, cherry"},
+  "sweet-fruit":{"l":"Sweet Fruits","g":"banana, dates, figs, raisins, persimmon"},
+  "nonstarchy":{"l":"Non-starchy Vegetables","g":"spinach, kale, cucumber, celery, broccoli, tomato, sprouts"},
+  "starchy":{"l":"Starchy Vegetables","g":"sweet potato, potato, pumpkin, beetroot, carrot, parsnip, corn"},
+  "nuts":{"l":"Nuts and Seeds","g":"soaked almonds, hemp seeds, pumpkin seeds, walnuts, tahini"},
+  "fat":{"l":"Healthy Fats","g":"avocado, olive oil, coconut, hemp oil"},
+  "seaveg":{"l":"Sea Vegetables","g":"nori, dulse, kelp, spirulina, chlorella"},
+  "superfood":{"l":"Superfoods","g":"bee pollen, maca, raw cacao nibs"},
+  "egg":{"l":"Eggs","g":"pasture-raised, soft yolk preferred"},
+  "fish":{"l":"Wild Fish","g":"salmon, mackerel, tuna, sardines"},
+  "chicken":{"l":"Chicken Breast","g":"poached or grilled, small portion only"},
+  "grain":{"l":"Grains / Starch","g":"sourdough, bulgur wheat, ancient grain pasta, rice - with veg/fat only"},
+  "legume-raw":{"l":"Sprouted / Raw Legumes","g":"sprouted lentils, raw chickpeas - living food, most protocol-friendly"},
+  "legume-cooked":{"l":"Cooked Legumes","g":"cooked lentils, chickpeas, cannellini, kidney beans, white beans"},
+  "coffee":{"l":"Coffee","g":"30-45 min after food, not on empty stomach"},
+  "drink":{"l":"Neutral Drinks","g":"water, herbal tea, coconut water, green juice"}
+};
+
+var CB = {
+  "berry":{"g":["berry","acid-fruit","sub-acid-fruit","sweet-fruit"],"p":[],"y":[],"r":["melon","nonstarchy","starchy","nuts","fat","seaveg","egg","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"Berries are sub-acid and bridge all fruit types. Tart cherries and dark berries are especially powerful anti-inflammatories and lymph cleansers. Always eat fruit on an empty stomach."},
+  "melon":{"g":[],"p":[],"y":[],"r":["berry","acid-fruit","sub-acid-fruit","sweet-fruit","nonstarchy","starchy","nuts","fat","seaveg","egg","fish","chicken","grain","superfood","coffee","drink","legume-raw","legume-cooked"],"sn":"GOLDEN RULE: Melons are ALWAYS eaten completely alone. No other food - not even other fruit. No exceptions."},
+  "acid-fruit":{"g":["berry","acid-fruit","sub-acid-fruit"],"p":[],"y":[],"r":["melon","sweet-fruit","nonstarchy","starchy","nuts","fat","seaveg","egg","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"Acid + sub-acid + berries are the ideal pairings. Never with sweet fruits - causes fermentation and gas."},
+  "sub-acid-fruit":{"g":["berry","acid-fruit","sub-acid-fruit","sweet-fruit"],"p":[],"y":[],"r":["melon","nonstarchy","starchy","nuts","fat","seaveg","egg","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"The most versatile fruit type - bridges acid and sweet fruits easily."},
+  "sweet-fruit":{"g":["berry","sub-acid-fruit","sweet-fruit"],"p":[],"y":[],"r":["melon","acid-fruit","nonstarchy","starchy","fat","seaveg","egg","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"Never with acid fruit - causes fermentation. Hemp seeds blended into a smoothie is the only acceptable nut addition."},
+  "nonstarchy":{"g":["nonstarchy","starchy","fat","seaveg"],"p":["egg","fish","chicken","legume-raw"],"y":["nuts","grain","legume-cooked"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit"],"sn":"The most versatile food group - pairs with almost everything except fruit. Sprouted legumes pair better than cooked."},
+  "starchy":{"g":["nonstarchy","seaveg"],"p":["fat"],"y":["grain","legume-cooked"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","fish","chicken"],"sn":"Pumpkin and potato are the heaviest starches. Pair only with non-starchy veg and small amounts of fat. Never with any protein."},
+  "nuts":{"g":["nonstarchy","seaveg"],"p":["fat"],"y":["starchy"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","egg","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"Always soak before eating. Small portions only. One nut or seed type per meal."},
+  "fat":{"g":["nonstarchy","seaveg"],"p":["egg","fish","chicken","legume-raw","legume-cooked"],"y":["starchy","nuts","grain"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit"],"sn":"Fats slow digestion - use in moderation. Never with fruit. Avocado is the lightest option."},
+  "seaveg":{"g":["nonstarchy","nuts","fat","seaveg","superfood"],"p":["egg","fish","chicken","legume-raw"],"y":["starchy","grain","legume-cooked"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit"],"sn":"Highly versatile - use as seasoning, wraps or toppings on almost any savoury meal."},
+  "superfood":{"g":["berry","sub-acid-fruit","sweet-fruit","nonstarchy","seaveg"],"p":["acid-fruit"],"y":["nuts","fat"],"r":["melon","egg","fish","chicken","grain"],"sn":"Best blended into smoothies or used as toppings. Bee pollen and maca fit fruit meals well."},
+  "egg":{"g":["nonstarchy","fat","seaveg"],"p":[],"y":["starchy"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","fish","chicken","grain","legume-raw","legume-cooked"],"sn":"Pair with a large base of leafy greens and healthy fats. Soft yolk preferred. One protein per meal only."},
+  "fish":{"g":["nonstarchy","fat","seaveg"],"p":[],"y":["starchy"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","chicken","grain","legume-raw","legume-cooked"],"sn":"Wild-caught only. Large salad base with fats. No rice or starch alongside. Sashimi is the best form."},
+  "chicken":{"g":["nonstarchy","fat","seaveg"],"p":[],"y":["starchy"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","fish","grain","legume-raw","legume-cooked"],"sn":"Poached or grilled only. Small portion with a very large salad. Heaviest option - plan 4 hrs before next meal."},
+  "grain":{"g":["nonstarchy"],"p":["fat"],"y":["starchy","legume-cooked"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","fish","chicken","legume-raw"],"sn":"Treat as starch - pair ONLY with non-starchy veg and fats. Never with any protein. Sourdough is the best grain option."},
+  "legume-raw":{"g":["nonstarchy","seaveg"],"p":["fat"],"y":["starchy"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","fish","chicken","grain","legume-cooked"],"sn":"Sprouted lentils and raw chickpeas are living foods - the most protocol-friendly legume form. Sprouting removes enzyme inhibitors and converts starch. Use on salads or as a topping."},
+  "legume-cooked":{"g":["nonstarchy","seaveg"],"p":["fat"],"y":["starchy","grain"],"r":["melon","berry","acid-fruit","sub-acid-fruit","sweet-fruit","nuts","egg","fish","chicken","legume-raw"],"sn":"Cooked legumes combine protein and starch in one food - an inherent combining challenge. Keep portions moderate. Pair with large amounts of non-starchy veg and a fat. Never with other proteins or grains."},
+  "coffee":{"g":[],"p":[],"y":["nonstarchy","fat","nuts","grain"],"r":["melon","acid-fruit","sub-acid-fruit","sweet-fruit","starchy","egg","fish","chicken","seaveg"],"sn":"Max 1 cup/day. Never on empty stomach. Best window: 30-45 min after a meal, before 3pm."},
+  "drink":{"g":["acid-fruit","sub-acid-fruit","sweet-fruit","nonstarchy","starchy","nuts","fat","seaveg","egg","fish","chicken","grain","superfood"],"p":[],"y":[],"r":["melon"],"sn":"Neutral drinks pair freely with almost all foods. Never alongside melon - melon must always be eaten alone."}
+};
+
+var RT = {
+  "berry":{"breakfast":{"r":"green","n":"Excellent on empty stomach. Tart cherries and dark berries are powerful lymph cleansers and anti-inflammatories. Ideal morning food."},"preworkout":{"r":"green","n":"Fast-digesting and anti-inflammatory. Berries 30-45 min before training are excellent."},"postworkout":{"r":"green","n":"Top recovery food. Tart cherries specifically reduce muscle inflammation after intense training."},"lunch":{"r":"yellow","n":"Only on empty stomach - must be 2+ hrs since last meal. Better in morning."},"dinner":{"r":"yellow","n":"Light berries like grapes or blueberries ok if nothing since afternoon. Better kept to morning."},"daysnack":{"r":"green","n":"Perfect snack if 2+ hrs since last meal. Easy, portable and lymph-active."},"nightsnack":{"r":"yellow","n":"Small handful of blueberries or grapes ok. Avoid tart or citrus-adjacent berries late evening."}},
+  "melon":{"breakfast":{"r":"green","n":"Perfect - eat on empty stomach. Wait 30 min after. Nothing else with it."},"preworkout":{"r":"green","n":"Fast hydration and carbs. Eat alone 30+ min before training."},"postworkout":{"r":"green","n":"Hydrating and alkalising. Eat alone immediately after workout."},"lunch":{"r":"yellow","n":"Only if 3+ hrs since last food and eaten completely alone. Better in morning."},"dinner":{"r":"yellow","n":"Melons ferment as digestion slows at night. Better choices for dinner."},"daysnack":{"r":"green","n":"Great snack - eat alone. Wait 30 min before any other food."},"nightsnack":{"r":"red","n":"Avoid. Ferments overnight as digestion slows. Will cause bloating."}},
+  "acid-fruit":{"breakfast":{"r":"green","n":"Ideal - powerful lymph cleanser. Eat on empty stomach first thing."},"preworkout":{"r":"green","n":"Fast-digesting energy. Citrus and berries excellent 30-45 min before training."},"postworkout":{"r":"green","n":"Anti-inflammatory. Berries especially are top muscle recovery food."},"lunch":{"r":"yellow","n":"Only on empty stomach - must be 2+ hrs since last meal. Better in morning."},"dinner":{"r":"yellow","n":"Fruit is better eaten earlier in the day. Only if nothing else since afternoon."},"daysnack":{"r":"green","n":"Good snack if 2+ hrs since last meal. Citrus or berries are ideal."},"nightsnack":{"r":"yellow","n":"Light berries ok if truly hungry. Avoid heavy citrus late evening."}},
+  "sub-acid-fruit":{"breakfast":{"r":"green","n":"Excellent breakfast. Smoothies and fruit bowls. Pairs with acid or sweet fruit."},"preworkout":{"r":"green","n":"Reliable energy source. Mango, berries and apple all work well."},"postworkout":{"r":"green","n":"Tart cherries are the top anti-inflammatory recovery food. Excellent window."},"lunch":{"r":"yellow","n":"Only if 2+ hrs since last meal and on empty stomach. Better earlier in day."},"dinner":{"r":"yellow","n":"Light option if truly hungry. Better kept to morning or afternoon."},"daysnack":{"r":"green","n":"Great afternoon snack. Apple, pear, grapes - easy, satisfying, lymph-active."},"nightsnack":{"r":"yellow","n":"Grapes or apple ok. Avoid heavier options like mango or papaya late at night."}},
+  "sweet-fruit":{"breakfast":{"r":"green","n":"Ideal morning fuel. Banana smoothies, dates, figs - high energy start."},"preworkout":{"r":"green","n":"Best pre-workout food. Banana + dates = fast glycogen. Eat 30-45 min before."},"postworkout":{"r":"green","n":"Replenishes glycogen fast. Follow with a hemp or spirulina smoothie for protein."},"lunch":{"r":"yellow","n":"High sugar load midday. Better in morning or pre-workout. Eat alone if used."},"dinner":{"r":"red","n":"Avoid. High-sugar sweet fruit ferments as digestion slows and spikes blood sugar."},"daysnack":{"r":"yellow","n":"Ok on active training days. Avoid if sedentary."},"nightsnack":{"r":"red","n":"Avoid entirely. High sugar at night causes fermentation, disrupted sleep and blood sugar spikes."}},
+  "nonstarchy":{"breakfast":{"r":"green","n":"Excellent with eggs or as green juice. Celery juice is a perfect morning opener."},"preworkout":{"r":"yellow","n":"Large fibre portions before HIIT creates digestive burden during training. Keep light."},"postworkout":{"r":"green","n":"Ideal recovery base - nutrient-dense, alkalising, pairs with all protein options."},"lunch":{"r":"green","n":"Core of your lunch. Large raw salad base - eat freely."},"dinner":{"r":"green","n":"Perfect dinner base. Zucchini noodles, raw salad, steamed greens - all ideal."},"daysnack":{"r":"green","n":"Celery, cucumber, bell pepper with avocado or tahini dip."},"nightsnack":{"r":"green","n":"Safest night snack. Light on digestion, supportive of overnight recovery."}},
+  "starchy":{"breakfast":{"r":"yellow","n":"Unusual for breakfast. Keep very small if used, with greens only. Potato and pumpkin - avoid entirely at breakfast."},"preworkout":{"r":"yellow","n":"Too slow-digesting before training. Use only if 90+ min before workout."},"postworkout":{"r":"yellow","n":"Acceptable for glycogen replenishment but fruit is faster and cleaner."},"lunch":{"r":"green","n":"Raw grated beetroot or carrot on salad is excellent. Lightly steamed sweet potato, pumpkin or potato ok."},"dinner":{"r":"yellow","n":"Lightly steamed sweet potato or pumpkin occasionally. Small portion. Not with protein."},"daysnack":{"r":"yellow","n":"Carrot sticks fine as a snack. Sweet potato, pumpkin or potato too heavy for snacking."},"nightsnack":{"r":"red","n":"Starch at night slows digestion significantly. Avoid."}},
+  "nuts":{"breakfast":{"r":"yellow","n":"Heavy for first meal. Hemp seeds in smoothie ok. Soaked nuts - tiny portion only."},"preworkout":{"r":"yellow","n":"Too much fat before HIIT. Only if 2+ hrs before training. Small handful max."},"postworkout":{"r":"green","n":"Hemp and pumpkin seeds are excellent post-workout protein. On salad or in smoothie."},"lunch":{"r":"green","n":"Ideal lunch topping. Soaked nuts or seeds on a large raw salad. 1-2 tbsp."},"dinner":{"r":"yellow","n":"Small portions only. Heavy fats at night slow overnight digestion and repair."},"daysnack":{"r":"green","n":"Small handful soaked almonds or pumpkin seeds - perfect afternoon snack."},"nightsnack":{"r":"red","n":"Too heavy. Nuts before bed burden digestion through the night."}},
+  "fat":{"breakfast":{"r":"green","n":"Avocado with eggs is an ideal breakfast. Olive oil in dressings - great start."},"preworkout":{"r":"yellow","n":"Fats slow energy release - not ideal immediately before training. 2+ hrs before only."},"postworkout":{"r":"green","n":"Avocado is excellent post-workout - aids recovery and nutrient absorption."},"lunch":{"r":"green","n":"Avocado and olive oil dressing are central to a great raw lunch."},"dinner":{"r":"green","n":"Fats suit dinner well - slower release supports overnight recovery."},"daysnack":{"r":"green","n":"Avocado as a snack or dip is ideal. Satiating and nutrient-dense."},"nightsnack":{"r":"yellow","n":"Small amount of avocado is ok. Heavier oils late at night are less ideal."}},
+  "seaveg":{"breakfast":{"r":"green","n":"Spirulina and chlorella in morning smoothie - excellent mineral and protein boost."},"preworkout":{"r":"green","n":"Spirulina pre-workout is a Morse staple. Alkalising and mineral-rich."},"postworkout":{"r":"green","n":"Spirulina and chlorella are deeply mineralising and anti-inflammatory post-workout."},"lunch":{"r":"green","n":"Dulse flakes, nori wraps - great addition to any lunch meal."},"dinner":{"r":"green","n":"Nori wraps, kelp noodles, dulse in salad - all excellent dinner options."},"daysnack":{"r":"green","n":"Nori sheets as a snack are ideal - light, mineral-rich and satisfying."},"nightsnack":{"r":"green","n":"Irish moss gel or nori - very light and supportive of overnight recovery."}},
+  "superfood":{"breakfast":{"r":"green","n":"Bee pollen and maca in morning smoothie are ideal. Start with small doses and build."},"preworkout":{"r":"green","n":"Maca for endurance. Spirulina for fast-acting nutrition. Perfect pre-workout additions."},"postworkout":{"r":"green","n":"Bee pollen delivers complete amino acids and B vitamins. Excellent recovery addition."},"lunch":{"r":"green","n":"Raw cacao nibs in salads or smoothies. Bee pollen as a topping."},"dinner":{"r":"yellow","n":"Maca and raw cacao are stimulating - can affect sleep if used too late."},"daysnack":{"r":"green","n":"Bee pollen alone or cacao nibs are a great snack. Small portions."},"nightsnack":{"r":"yellow","n":"Stimulating effect of maca and cacao - avoid after 5pm if sleep-sensitive."}},
+  "egg":{"breakfast":{"r":"gplus","n":"Most natural egg window. Soft yolk. With leafy greens and avocado. No starch alongside."},"preworkout":{"r":"yellow","n":"Protein before HIIT is a digestive burden. Eat 90+ min before if at all."},"postworkout":{"r":"gplus","n":"Good recovery protein. 2 eggs with greens and avocado - a solid post-workout."},"lunch":{"r":"gplus","n":"Soft-boiled egg on large salad. Pair only with non-starchy veg and fat."},"dinner":{"r":"gplus","n":"Poached or scrambled eggs with greens. Keep portion moderate."},"daysnack":{"r":"gplus","n":"1 soft egg as a bridge snack with celery or cucumber sticks."},"nightsnack":{"r":"yellow","n":"Protein at night is heavy. Small egg ok if truly hungry but ideally avoid."}},
+  "fish":{"breakfast":{"r":"yellow","n":"Unusual window. Better saved for lunch or dinner."},"preworkout":{"r":"red","n":"Heavy protein before training impairs performance. Avoid."},"postworkout":{"r":"gplus","n":"Sashimi or grilled wild fish is excellent recovery protein. Rich in omega-3 for inflammation."},"lunch":{"r":"gplus","n":"Sashimi with salad or fish on large greens - ideal acceptable protein for lunch."},"dinner":{"r":"gplus","n":"Grilled wild salmon with large salad - ideal dinner protein on training days."},"daysnack":{"r":"yellow","n":"Only if you need a meaningful protein bridge - small sashimi portion at most."},"nightsnack":{"r":"yellow","n":"Too heavy for a night snack. Light veg or fruit is better if hungry late."}},
+  "chicken":{"breakfast":{"r":"yellow","n":"Very heavy for breakfast. Eggs are a far better morning protein."},"preworkout":{"r":"red","n":"Never before training. Takes 4 hrs to digest - will actively impair performance."},"postworkout":{"r":"gplus","n":"Acceptable post-workout protein. Small portion, poached or grilled, with large salad."},"lunch":{"r":"gplus","n":"Best chicken window. With large non-starchy salad and olive oil dressing."},"dinner":{"r":"gplus","n":"Acceptable dinner protein. Keep portion small. Allow 4 hrs before sleep."},"daysnack":{"r":"red","n":"Too heavy for a snack. Not suitable."},"nightsnack":{"r":"red","n":"Never eat chicken late. Takes 4+ hrs to digest. Disrupts overnight repair."}},
+  "grain":{"breakfast":{"r":"yellow","n":"Sourdough with avocado and greens ok occasionally. Fruit is the better breakfast."},"preworkout":{"r":"yellow","n":"Small sourdough slice 60-90 min before (not 30 min) with avocado only."},"postworkout":{"r":"yellow","n":"Only with avocado and greens. Not with any protein. Better options exist post-workout."},"lunch":{"r":"yellow","n":"Sourdough open sandwich with avocado and greens only. Bulgur or ancient grain pasta with olive oil and veg."},"dinner":{"r":"yellow","n":"Small portion with vegetables and fat only. Occasional use - not a staple."},"daysnack":{"r":"yellow","n":"Small sourdough or rice cakes with avocado - occasional only."},"nightsnack":{"r":"red","n":"Starch late at night slows overnight digestion significantly. Avoid."}},
+  "legume-raw":{"breakfast":{"r":"yellow","n":"Too heavy for breakfast. Better saved for lunch or post-workout."},"preworkout":{"r":"yellow","n":"Too dense before training. Use only if 90+ min before workout."},"postworkout":{"r":"gplus","n":"Sprouted lentils or raw chickpeas on a salad - good plant protein for recovery. Add olive oil and greens."},"lunch":{"r":"gplus","n":"Best window. Large raw salad with sprouted lentils or chickpeas, olive oil and sea veg. Excellent protocol-friendly meal."},"dinner":{"r":"gplus","n":"Sprouted lentils on a large salad with avocado. Light enough for evening if portions are moderate."},"daysnack":{"r":"yellow","n":"Too dense as a snack. Better as part of a meal."},"nightsnack":{"r":"red","n":"Too heavy before sleep. Avoid."}},
+  "legume-cooked":{"breakfast":{"r":"red","n":"Far too heavy for breakfast. Protein and starch combined - burdens digestion all morning."},"preworkout":{"r":"red","n":"Never before training. Dense protein-starch food will impair performance."},"postworkout":{"r":"yellow","n":"Acceptable occasionally - lentil soup or bean salad with greens. Keep portions small. Sprouted form is preferable."},"lunch":{"r":"yellow","n":"Best window for cooked legumes if you use them. With large non-starchy salad and olive oil. Small-moderate portion only."},"dinner":{"r":"yellow","n":"Occasional use only. Lentil or bean dish with greens and fat. Allow 3+ hrs before sleep."},"daysnack":{"r":"red","n":"Too heavy for a snack."},"nightsnack":{"r":"red","n":"Avoid entirely. Very slow to digest - will sit in gut overnight."}},
+  "coffee":{"breakfast":{"r":"red","n":"Never on empty stomach. Cortisol spike, adrenal stress, disrupts the morning lymph window."},"preworkout":{"r":"yellow","n":"Only if 45+ min after a fruit meal and 60+ min before training. Not on empty stomach."},"postworkout":{"r":"yellow","n":"After post-workout food has settled 30+ min. Dehydrating after sweating - add extra water."},"lunch":{"r":"yellow","n":"Best coffee window - 30-45 min after lunch. Before 2pm ideally."},"dinner":{"r":"red","n":"Never with or after dinner. Disrupts sleep and overnight lymphatic drainage and repair."},"daysnack":{"r":"yellow","n":"Acceptable mid-afternoon (before 3pm). After a snack has settled, not alongside food."},"nightsnack":{"r":"red","n":"Never. Caffeine disrupts sleep and overnight lymphatic repair - critical for recovery."}},
+  "drink":{"breakfast":{"r":"green","n":"Lemon water first thing is ideal. Herbal tea, coconut water, green juice - all excellent."},"preworkout":{"r":"green","n":"Coconut water for electrolytes, green juice for minerals. Perfect pre-workout drinks."},"postworkout":{"r":"green","n":"Coconut water replenishes electrolytes naturally. Green juice is deeply mineralising."},"lunch":{"r":"green","n":"Herbal teas and water with any meal. Celery juice 20 min before lunch is ideal."},"dinner":{"r":"green","n":"Herbal teas after dinner support digestion. Kidney and lymph herb teas are excellent."},"daysnack":{"r":"green","n":"Any neutral drink works as a snack companion or on its own."},"nightsnack":{"r":"green","n":"Chamomile or valerian tea before bed supports sleep and overnight recovery."}}
+};
+
+var WT = {
+  "berry":{"t":"30 minutes","d":"Berries digest quickly like other fruit. Wait before switching food type."},
+  "melon":{"t":"30 minutes","d":"Fastest digesting food. Wait before introducing anything else."},
+  "acid-fruit":{"t":"30 minutes","d":"Fruit digests quickly. Wait 30 min before switching food type."},
+  "sub-acid-fruit":{"t":"30 minutes","d":"Fruit digests quickly. Wait 30 min before switching food type."},
+  "sweet-fruit":{"t":"30-45 minutes","d":"Slightly denser than acid fruit. 45 min if eaten with sub-acid fruits."},
+  "nonstarchy":{"t":"2 hours","d":"Allow 2 hours before switching food types or returning to fruit."},
+  "starchy":{"t":"2.5 hours","d":"Starchier than leafy veg - allow slightly longer than non-starchy."},
+  "nuts":{"t":"3-4 hours","d":"Dense fats and proteins - heaviest raw food. Plan meals around this."},
+  "fat":{"t":"2-3 hours","d":"Avocado is lighter; oils are faster. Adjust based on portion size."},
+  "seaveg":{"t":"2 hours","d":"Light and mineral-rich. Similar wait time to non-starchy vegetables."},
+  "superfood":{"t":"30-60 minutes","d":"Mostly used as add-ins. Wait time depends on what they are mixed with."},
+  "egg":{"t":"3 hours","d":"Allow 3 hours before returning to fruit or switching food types."},
+  "fish":{"t":"3 hours","d":"Allow 3 hours before switching food types, especially back to fruit."},
+  "chicken":{"t":"4 hours","d":"Heaviest acceptable protein. Plan the rest of your day around this window."},
+  "grain":{"t":"2.5-3 hours","d":"Starch needs time. Allow 3 hrs before any protein or fruit."},
+  "legume-raw":{"t":"2-3 hours","d":"Lighter than cooked legumes but still dense. Allow 2-3 hrs before switching food types."},
+  "legume-cooked":{"t":"3-4 hours","d":"Protein and starch combined - one of the slowest foods to digest. Plan meals around this."},
+  "coffee":{"t":"30-45 minutes","d":"A stimulant, not a food. Allow time to settle before next meal."},
+  "drink":{"t":"No wait needed","d":"Neutral drinks do not significantly impact food digestion timing."}
+};
+
+var RC = {
+  "green": {"l":"IDEAL - Raw Protocol",        "i":"V", "c":"green"},
+  "gplus": {"l":"ACCEPTABLE - Fits Protocol",  "i":"O", "c":"gplus"},
+  "yellow":{"l":"USE WITH CARE",               "i":"!", "c":"yellow"},
+  "red":   {"l":"AVOID - Not Recommended",     "i":"X", "c":"red"}
+};
+
+var ML = {
+  "breakfast":   {"l":"Breakfast"},
+  "preworkout":  {"l":"Pre-workout"},
+  "postworkout": {"l":"Post-workout"},
+  "lunch":       {"l":"Lunch"},
+  "daysnack":    {"l":"Day Snack"},
+  "dinner":      {"l":"Dinner"},
+  "nightsnack":  {"l":"Night Snack"}
+};
+
+// ---- STATE ----
+var selId = null;
+var selType = null;
+var selName = null;
+
+// ---- FILTER ----
+document.getElementById("filter").addEventListener("input", function() {
+  var q = this.value.toLowerCase();
+  var items = document.getElementById("list").getElementsByClassName("item");
+  var labels = document.getElementById("list").getElementsByClassName("lbl");
+
+  for (var i = 0; i < items.length; i++) {
+    var match = !q || items[i].innerHTML.toLowerCase().indexOf(q) !== -1;
+    items[i].className = match ? "item" + (items[i].getAttribute("data-id") === selId ? " sel" : "") : "item hide";
+  }
+
+  for (var j = 0; j < labels.length; j++) {
+    var lbl = labels[j];
+    var next = lbl.nextSibling;
+    var anyVis = false;
+    while (next) {
+      if (next.nodeType === 1) {
+        if (next.className.indexOf("lbl") !== -1) break;
+        if (next.className.indexOf("hide") === -1) { anyVis = true; break; }
+      }
+      next = next.nextSibling;
+    }
+    lbl.className = anyVis ? "lbl" : "lbl hide";
+  }
+});
+
+// ---- SINGLE DELEGATED CLICK on the list container ----
+document.getElementById("list").addEventListener("click", function(e) {
+  var el = e.target;
+  if (!el || el.className.indexOf("item") === -1) return;
+  var id = el.getAttribute("data-id");
+  if (!id) return;
+
+  // clear previous selection
+  var items = document.getElementById("list").getElementsByClassName("item");
+  for (var i = 0; i < items.length; i++) {
+    items[i].className = items[i].className.replace(" sel", "");
+  }
+
+  el.className += " sel";
+  selId   = id;
+  selType = el.getAttribute("data-type");
+  selName = el.innerHTML;
+  document.getElementById("spill").innerHTML = "Selected: " + selName;
+  document.getElementById("go").disabled = !document.getElementById("meal").value;
+});
+
+document.getElementById("meal").addEventListener("change", function() {
+  document.getElementById("go").disabled = !selId || !this.value;
+});
+
+// ---- CHECK ----
+document.getElementById("go").addEventListener("click", function() {
+  document.getElementById("err").className = "err";
+  if (!selId || !document.getElementById("meal").value) {
+    document.getElementById("err").className = "err show"; return;
+  }
+
+  var type = selType;
+  var meal = document.getElementById("meal").value;
+  var rd = RT[type][meal];
+  var cb = CB[type];
+  var wt = WT[type];
+  var rc = RC[rd.r];
+  var mi = ML[meal];
+
+  function makeCol(cls, lbl, types) {
+    var rows = "";
+    for (var i = 0; i < types.length; i++) {
+      var m = TM[types[i]];
+      if (m) rows += "<li><span class='fn'>" + m.l + "</span><span class='fe'>" + m.g + "</span></li>";
+    }
+    var body = rows ? "<ul class='cul'>" + rows + "</ul>" : "<p class='cem'>None</p>";
+    return "<div class='ccol " + cls + "'><div class='chead'><span class='cdot'></span><span class='clbl'>" + lbl + "</span></div>" + body + "</div>";
+  }
+
+  var h = "<div class='bnr " + rc.c + "'>"
+    + "<div class='bico'>[" + rc.i + "]</div>"
+    + "<div><div class='brat'>" + rc.l + "</div><div class='bnam'>" + selName + "</div></div>"
+    + "<div class='bml'><span class='mtag'>" + mi.l + "</span></div>"
+    + "</div>"
+    + "<div class='mnote'><span class='arr'>&rarr;</span><span>" + rd.n + "</span></div>"
+    + (cb.sn ? "<div class='snote'><span class='dia'>*</span><span>" + cb.sn + "</span></div>" : "")
+    + "<div class='csec'><div class='chdr'>Food Combining Guide</div><div class='cgrd'>"
+    + makeCol("cg", "Pairs Ideally With", cb.g)
+    + makeCol("cp", "Acceptable Pairings", cb.p)
+    + makeCol("cy", "Use With Caution", cb.y)
+    + makeCol("cr", "Never Pair With", cb.r)
+    + "</div></div>"
+    + "<div class='wstr'><span class='wico'>[T]</span><div>"
+    + "<div class='wlbl'>Wait before next food type</div>"
+    + "<div class='wtim'>" + wt.t + "</div>"
+    + "<div class='wdet'>" + wt.d + "</div>"
+    + "</div></div>";
+
+  var res = document.getElementById("res");
+  res.innerHTML = h;
+  res.className = "on";
+  res.scrollIntoView({behavior:"smooth", block:"start"});
+});
+</script>
+</body>
+</html>
